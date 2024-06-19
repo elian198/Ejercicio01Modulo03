@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace EjercicioClase1Modulo3.Controllers
 {
-    [Route( "" )]
+    [Route("v1/libros")]
     [ApiController]
     public class BookController : ControllerBase
     {
@@ -26,10 +28,9 @@ namespace EjercicioClase1Modulo3.Controllers
         */
 
         [HttpGet]
-        [Route( "" )]
         public ActionResult<List<Book>> GetBooks()
         {
-            return Ok();
+            return Ok(Books.ToList());
         }
 
         #endregion
@@ -40,7 +41,12 @@ namespace EjercicioClase1Modulo3.Controllers
         [GET] v1/libros/{id}
         Ejemplo: v1/libros/8 (devuelve toda la información del libro cuyo id es 8. Es decir: El diario de Ana Frank)
         */
-
+        [HttpGet]
+        [Route("/{id}")]
+        public ActionResult<Book> getBook([FromRoute] int id)
+        {
+            return Ok(Books.Where(book => book.id == id).First());
+        }
 
         #endregion
 
@@ -50,6 +56,12 @@ namespace EjercicioClase1Modulo3.Controllers
         [GET] v1/libros/genero/{genero} 
         Ejemplo: v1/libros/genero/fantasía (devuelve una lista de todos los libros del género fantasía)
          */
+        [HttpGet]
+        [Route("/genero/{genero}")]
+        public ActionResult<List<Book>> getBooksByGenero([FromRoute] String genero)
+        {
+            return Ok(Books.Where(book => book.genero.Equals(genero)).ToList());
+        }
 
 
         #endregion
@@ -61,7 +73,14 @@ namespace EjercicioClase1Modulo3.Controllers
         Ejemplo: v1/libros?autor=Paulo Coelho (devuelve una lista de todos los libros del autor Paulo Coelho)
          */
 
+        [HttpGet]
+        [Route("/autor")]
+        public ActionResult<List<Book>> getBooksByAutor([FromQuery] String autor)
+        {
+            return Ok(Books.Where(book => book.autor.Equals(autor)).ToList());
+        }
         #endregion
+
 
         #region Ejercicio 5
         /*
@@ -70,6 +89,12 @@ namespace EjercicioClase1Modulo3.Controllers
         Idealmente, el listado de géneros que retorne el endpoint, no debe contener repetidos.
          */
 
+        [HttpGet]
+        [Route("/generos")]
+        public ActionResult<List<Book>> getGroupGeneroWithOutDuplicate()
+        {
+            return Ok(Books.GroupBy(book => book.genero,(key, group) => group.FirstOrDefault()).ToList());
+        }
         #endregion
 
         #region Ejercicio 6
@@ -81,6 +106,18 @@ namespace EjercicioClase1Modulo3.Controllers
         v1/libros?pagina=2&cantidad=10 (devuelve una lista de diez libros, salteando los primeros 10)
         v1/libros?pagina=3&cantidad=10 (devuelve una lista de diez libros, salteando los primeros 20)
          */
+
+        [HttpGet]
+        [Route("/paginacion")]
+        public ActionResult<List<Book>> getBooksWithPagination([FromQuery] int pagina, [FromQuery] int cantidad)
+        {
+
+            if (Books.Count() >= (pagina * cantidad))
+                return Ok(Books.Skip((pagina -1) * cantidad).Take(cantidad).ToList());
+
+            else
+                return NoContent();
+        }
         #endregion
     }
 }
